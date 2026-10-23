@@ -1,27 +1,158 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>美股情報日曆</title>
-  <link rel="manifest" href="/manifest.json">
-  <!-- 引入美觀的月曆套件 -->
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>美股日報 & 行事曆</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1e293b" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --primary: #38bdf8;
+      --border: #334155;
+      --active-news: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    @media (min-width: 768px) {
+      .container { grid-template-columns: 1.1fr 0.9fr; }
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .nav-btn {
+      background: #334155;
+      color: var(--text);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+    .day-header {
+      font-size: 0.8rem;
+      color: var(--subtext);
+      padding: 6px 0;
+    }
+    .day-cell {
+      min-height: 52px;
+      border-radius: 8px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      padding: 4px;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+    }
+    .day-cell.other-month { opacity: 0.25; cursor: default; }
+    .day-cell.selected { border-color: var(--primary); background: #1e3a5f; }
+    .day-cell .news-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--active-news);
+      border-radius: 50%;
+      position: absolute;
+      top: 4px;
+      right: 4px;
+    }
+    .event-badge {
+      font-size: 0.65rem;
+      border-radius: 4px;
+      padding: 1px 3px;
+      margin-top: 2px;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+    }
+    .badge-EARNINGS { background: #0369a1; color: #bae6fd; }
+    .badge-FOMC { background: #b45309; color: #fef3c7; }
+    .badge-OTHER { background: #475569; color: #e2e8f0; }
+
+    .news-item {
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0;
+    }
+    .news-item:last-child { border-bottom: none; }
+    .news-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .news-ticker {
+      display: inline-block;
+      font-size: 0.75rem;
+      background: #334155;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+    .news-summary {
+      font-size: 0.85rem;
+      color: var(--subtext);
+      line-height: 1.4;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
-  <div class="max-w-4xl mx-auto p-4">
-    <header class="mb-4 flex justify-between items-center">
-      <h1 class="text-2xl font-bold">美股重點觀測曆</h1>
-    </header>
+<body>
+  <div class="container">
+    <!-- 月曆區域 -->
+    <div class="card">
+      <div class="header">
+        <button class="nav-btn" id="prev-month">&lt;</button>
+        <h2 id="current-month-label" style="font-size:1.1rem;"></h2>
+        <button class="nav-btn" id="next-month">&gt;</button>
+      </div>
+      <div class="calendar-grid" id="calendar"></div>
+    </div>
 
-    <!-- 月曆區域 (顯示當月重要事件: 財報、FOMC 等) -->
-    <div id="calendar" class="bg-white p-4 rounded-xl shadow mb-6"></div>
-
-    <!-- 點選日期後顯示當天新聞清單 -->
-    <div id="news-section" class="bg-white p-6 rounded-xl shadow hidden">
-      <h2 id="selected-date-title" class="text-xl font-bold mb-4 text-blue-700"></h2>
-      <div id="news-list" class="space-y-4"></div>
+    <!-- 新聞面板區域 -->
+    <div class="card">
+      <div class="header">
+        <h2 id="selected-date-label" style="font-size:1.1rem;">當日新聞重點</h2>
+      </div>
+      <div id="news-container">
+        <p style="color:var(--subtext); font-size:0.9rem;">請點選日曆查看該日美股快訊</p>
+      </div>
     </div>
   </div>
 

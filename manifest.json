@@ -1,14 +1,14 @@
 {
   "name": "美股每日情報與行事曆",
-  "short_name": "美股情報",
+  "short_name": "美股月曆",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#0f172a",
   "theme_color": "#1e293b",
   "icons": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
+      "src": "https://cdn-icons-png.flaticon.com/512/3310/3310624.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
