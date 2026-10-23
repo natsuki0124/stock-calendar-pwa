@@ -1,5 +1,4 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "stock-calendar-pwa",
   "compatibility_date": "2026-10-23",
   "assets": {
